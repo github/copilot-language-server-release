@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions for Copilot extensions
+    url: https://github.com/orgs/community/discussions/categories/copilot
+    about: Please ask and answer questions about using GitHub Copilot here
