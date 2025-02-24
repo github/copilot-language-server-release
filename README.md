@@ -7,6 +7,8 @@ Copilot via [the language server protocol](https://microsoft.github.io/language-
 
 **Sign up for [GitHub Copilot Free](https://github.com/settings/copilot)!**
 
+Please see [terms of use for GitHub Copilot](https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features#github-copilot)
+
 ## Getting Started
 
 To integrate with the Copilot Language Server, download the latest release from npm:
@@ -30,11 +32,13 @@ node ./node_modules/@github/copilot-language-server/dist/language-server.js --ve
 
 If using the `language-server.js` distribution, it is necessary to retain the entire `dist` directory contents.
 
+Communication with the language server typically happens over stdio with `--stdio`. The `language-server.js`
+distribution additionally supports Node IPC with `--node-ipc`.
 
 ## Communication Protocol
 
-[LSP (Language Server Protocol)](https://microsoft.github.io/language-server-protocol/) is used to communicate
-with the client. The base protocol is [JSON-RPC 2.0 with additional
+The [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) (LSP) is used to communicate with
+the client. The base protocol is [JSON-RPC 2.0 with additional
 headers](https://microsoft.github.io/language-server-protocol/specifications/specification-current/#baseProtocol).
 
 The Copilot Language Server attempts to follow the LSP spec as closely as possible, but many custom messages are
