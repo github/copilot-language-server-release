@@ -24,7 +24,7 @@ example, for macOS on arm64:
 ./node_modules/@github/copilot-language-server/native/darwin-arm64/copilot-language-server --version
 ```
 
-Or you can use [Node.js](https://nodejs.org/en/download/) version 20.x or later:
+Or you can use [Node.js](https://nodejs.org/en/download/) version 20.8 or later:
 
 ```sh
 node ./node_modules/@github/copilot-language-server/dist/language-server.js --version
