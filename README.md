@@ -309,3 +309,10 @@ The client may be sent
 [`window/showMessageRequest`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#window_showMessage)
 requests. Support for these messages is essential as they are used for important notifications including account and
 billing.
+
+
+---
+
+## License
+
+Distributed under the MIT license. See LICENSE for details.
