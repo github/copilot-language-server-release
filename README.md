@@ -17,14 +17,27 @@ To integrate with the Copilot Language Server, download the latest release from 
 npm install @github/copilot-language-server
 ```
 
-To run the language server, platform-specific binaries are available in the `native` directory of the npm package. For
+To run the language server, platform-specific binaries are available as separate
+packages included as optional dependencies. For example, [`@github/copilot-language-server-darwin-arm64`](https://www.npmjs.com/package/@github/copilot-language-server-darwin-arm64), for macOS on arm64:
 example, for macOS on arm64:
 
 ```sh
-./node_modules/@github/copilot-language-server/native/darwin-arm64/copilot-language-server --version
+./node_modules/@github/copilot-language-server-darwin-arm64/copilot-language-server --version
+```
+
+If repackaging the language server, all platform-specific binaries are available
+in the releases: https://github.com/github/copilot-language-server-release/releases
+For example, to download a zip of all of the binaries together:
+
+```
+gh release download -R github/copilot-language-server-release -p 'copilot-language-server-native-*'
 ```
 
 Or you can use [Node.js](https://nodejs.org/en/download/) version 20.8 or later:
+
+```sh
+npx @github/copilot-language-server --version
+```
 
 ```sh
 node ./node_modules/@github/copilot-language-server/dist/language-server.js --version
