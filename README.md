@@ -279,6 +279,73 @@ item, plus the length (in UTF-16 codepoints) of the completion that was accepted
 Note that the `acceptedLength` includes everything from the start of `insertText` to the end of the accepted text. It is
 *not* the length of the accepted text itself.
 
+## Next Edit Suggestions
+
+`textDocument/copilotInlineEdit` is a custom method used to retrieve "next edit"
+suggestions which are inline completions that may include deletions or
+modifications to existing text and may not be positioned at the cursor. These
+are similar to inline completions and the API shape is similar as well. But it
+is a separate method to allow opting into the feature and distinguishing between
+the two kinds of suggestions.
+
+The request parameters are similar to
+[`TextDocumentPositionParams`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#textDocumentPositionParams)
+but with a `textDocument.version` field required as in as
+[`VersionedTextDocumentIdentifier`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.18/specification/#versionedTextDocumentIdentifier):
+
+```json
+{
+    "textDocument": {
+        "uri": "file:///path/to/file",
+        "version": 0
+    },
+    "position": {"line": 1, "character": 2}
+}
+```
+
+The result is an object containing an `edits` array:
+
+```json
+{
+    "edits": [
+        {
+            "text": "an edit suggestion",
+            "textDocument": {
+                "uri": "file:///path/to/file",
+                "version": 0
+            },
+            "range": {
+                "start": {"line": 1, "character": 0},
+                "end": {"line": 1, "character": 5}
+            },
+            "command": {
+                "title": "Accept inline edit",
+                "command": "github.copilot.didAcceptCompletionItem",
+                "arguments": ["some-id"]
+            }
+        }
+    ]
+}
+```
+
+The `command` field, per the LSP spec, is called via
+[`workspace/executeCommand`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand)
+*after* the user accepts the edit. Copilot uses this for acceptance telemetry.
+
+The LSP spec does not provide an event for showing the edit, so a custom
+`textDocument/didShowInlineEdit` is used. Call it with an `item` parameter
+containing the item shown from the `edits` array (note only the first argument is required):
+
+```json
+{
+    "item": {
+        "command": {
+            "arguments": ["some-id"]
+        }
+    }
+}
+```
+
 ## Panel Completions
 
 Panel completions are used for "Open Copilot" style completions. They are similar to inline completions, but are shown
