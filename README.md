@@ -48,6 +48,47 @@ If using the `language-server.js` distribution, it is necessary to retain the en
 Communication with the language server typically happens over stdio with `--stdio`. The `language-server.js`
 distribution additionally supports Node IPC with `--node-ipc`.
 
+## Agent Client Protocol (ACP) (Preview)
+
+The Copilot Language Server also supports the [Agent Client Protocol (ACP)](https://agentclientprotocol.com/),
+enabling integration with ACP-compatible editors like [JetBrains AI Assistant](https://www.jetbrains.com/help/ai-assistant/acp.html), [Zed](https://zed.dev/), and more.
+
+### Running in ACP Mode
+
+To start the language server in ACP mode:
+
+```sh
+npx -y @github/copilot-language-server --acp
+```
+
+Or if installed locally:
+
+```sh
+node ./node_modules/@github/copilot-language-server/dist/language-server.js --acp
+```
+
+Communication happens over stdin/stdout.
+
+### JetBrains AI Assistant
+
+To use Copilot as an ACP agent in JetBrains AI Assistant, add the following to your `~/.jetbrains/acp.json`:
+
+```json
+{
+  "agent_servers": {
+    "GitHub Copilot": {
+      "command": "npx",
+      "args": [
+        "@github/copilot-language-server@latest",
+        "--acp"
+      ]
+    }
+  }
+}
+```
+
+See the [ACP specification](https://agentclientprotocol.com/) for full protocol details.
+
 ## Communication Protocol
 
 The [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) (LSP) is used to communicate with
