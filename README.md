@@ -437,3 +437,22 @@ billing.
 ## License
 
 Distributed under the MIT license. See LICENSE for details.
+
+
+## Installation
+
+```bash
+# Installation instructions
+```
+
+
+## Usage
+
+```python
+# Usage examples
+```
+
+
+## Contributing
+
+Contributions are welcome!
