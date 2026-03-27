@@ -195,12 +195,14 @@ status bar icon or other UI affordance.
 
 Notification includes the following fields:
 
+- `busy` - boolean indicating whether a task is in progress
 - `message` - a string describing the status (can be empty)
 - `kind` - status of the language server:
    - `'Normal'` - When everything is working normally.
    - `'Error'` - When not authorized and authenticated.
    - `'Warning'` - When there is a temporary issue, such as a failed HTTP request.
    - `'Inactive'` - When the current file is ignored due to file size or content exclusions.
+- `command` - an optional LSP `Command` object providing an actionable command for the client to offer the user (e.g., sign in, learn more about quota limits)
 
 ## Authentication
 
