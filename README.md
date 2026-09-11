@@ -389,6 +389,38 @@ containing the item shown from the `edits` array (note only the first argument i
 }
 ```
 
+Edits with known source attribution include optional `cacheTelemetryContext`.
+Keep this opaque string with cached copies. On each client-cache serve, create a
+fresh opportunity ID and track its lifecycle locally; do not reuse the source ID
+or wait for CLS. Keep the context until that occurrence ends, even after cache
+expiry, then send one `textDocument/reportCachedInlineEdit` notification:
+
+```json
+{
+    "opportunityId": "unique-id-for-this-cache-serve",
+    "context": "<unchanged cacheTelemetryContext from the source edit>",
+    "isShown": true,
+    "acceptance": "accepted"
+}
+```
+
+`acceptance` is `accepted`, `rejected`, or `notAccepted`; `disposalReason` is
+optional. Never-rendered results report `isShown: false` and `notAccepted`.
+Do not send ordinary provider feedback for these cache IDs.
+
+CLS validates the context and emits the existing `copilot-nes/provideInlineEdit`
+event with `isFromCache=1` and original request/model/ExP attribution. There is no
+source lookup, ACK, or telemetry-triggered model request. The context contains no
+source code, credentials or raw ExP filters/variables. Invalid contexts are
+logged/dropped; recent duplicates are suppressed. Delivery remains best effort,
+and no cache latency/token/ARC measurements are invented.
+
+Ordinary provider feedback is unchanged; discarded provider results use
+`github.copilot.didIgnoreNextEditSuggestionItem`. Missing/blank context retains
+legacy client behavior. The corrected reporting ships with the implementing
+CLS/plugin versions, without a separate rollout flag; original model experiment
+assignments are still preserved.
+
 ## Panel Completions
 
 Panel completions are used for "Open Copilot" style completions. They are similar to inline completions, but are shown
