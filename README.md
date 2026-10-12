@@ -421,6 +421,97 @@ legacy client behavior. The corrected reporting ships with the implementing
 CLS/plugin versions, without a separate rollout flag; original model experiment
 assignments are still preserved.
 
+## Unified Suggestions
+
+`textDocument/copilotSuggest` is a custom method that asks for inline completions and next edit suggestions in one
+request. The server calls the providers the trigger reason allows, picks the winner, and returns at most one
+suggestion, so the client does not have to choose between the two. `textDocument/inlineCompletion` and
+`textDocument/copilotInlineEdit` are unchanged and remain available.
+
+The parameters combine those of the two methods and add the `reason` for the request:
+
+```json
+{
+    "textDocument": {
+        "uri": "file:///path/to/file",
+        "version": 0
+    },
+    "position": {"line": 1, "character": 2},
+    "reason": "typing",
+    "include": {"completions": true, "edits": true},
+    "formattingOptions": {
+        "tabSize": 4,
+        "insertSpaces": true
+    }
+}
+```
+
+`reason` decides which providers are asked:
+
+| `reason` | Asks for |
+| --- | --- |
+| `typing` | Completions and next edits |
+| `manual` | Completions |
+| `cycling` | Completions, with alternatives to cycle through |
+| `caretMove` | Next edits |
+| `postAccept` | Next edits |
+
+An unknown `reason` is treated as `typing`. The optional `include` switches off a provider that the reason allows, for
+example to honor a user setting; it never switches one on. `context.selectedCompletionInfo` and `formattingOptions`
+mean the same as for `textDocument/inlineCompletion`, and `diagnostics`, if given, is passed to the next edit provider
+as with `textDocument/copilotInlineEdit`.
+
+A completion wins when it inserts new text; one that only repeats text already after the cursor is dropped. Otherwise
+the first next edit wins. The result is an object with an optional `suggestion`, absent when there is nothing to show:
+
+```json
+{
+    "suggestion": {
+        "id": "some-id",
+        "kind": "completion",
+        "presentation": "ghostText",
+        "target": {
+            "uri": "file:///path/to/file",
+            "version": 0
+        },
+        "items": [
+            {
+                "text": "a helpful suggestion",
+                "range": {
+                    "start": {"line": 1, "character": 0},
+                    "end": {"line": 1, "character": 2}
+                },
+                "command": {
+                    "title": "Completion Accepted",
+                    "command": "github.copilot.didAcceptCompletionItem",
+                    "arguments": ["some-id"]
+                }
+            }
+        ],
+        "provenance": {"viaProxy": true, "model": "some-model", "fromCache": false}
+    }
+}
+```
+
+- `kind` is what the suggestion is: `completion`, `edit`, or `jump`, an edit in another document named by `target`.
+  It decides how outcomes are reported.
+- `presentation` is how to draw it: `ghostText`, `diff`, or `jump`. Draw by `presentation` and report by `kind`; the
+  two can differ in future versions.
+- `items` holds more than one entry only for a completion, where the extras are alternatives to cycle through. Each
+  item carries its own `command`.
+- A `jump` may carry `targetLine`: the line in the target document to preview, as a word-level diff.
+- `provenance.model` and `provenance.fromCache` describe the first item, and are absent when its provider does not
+  report them. `fromCache` means the item was served without a model call.
+
+Skip a suggestion whose `kind` or `presentation` you do not recognize, since new values may be added.
+
+Report outcomes the way the method behind the `kind` does, passing the item that was shown or accepted. For a
+`completion`, send `textDocument/didShowCompletion` and `textDocument/didPartiallyAcceptCompletion` as described in
+[Inline Completions](#inline-completions). For an `edit` or a `jump`, send `textDocument/didShowInlineEdit` as described
+in [Next Edit Suggestions](#next-edit-suggestions). In every case, call the item's `command` via
+`workspace/executeCommand` after the user accepts it. Next edits returned this way carry no `cacheTelemetryContext`:
+the server caches them itself.
+
 ## Panel Completions
 
 Panel completions are used for "Open Copilot" style completions. They are similar to inline completions, but are shown
@@ -447,7 +538,9 @@ after accepting to trigger acceptance telemetry. Partial acceptance and shown ev
 ## Cancellation
 
 `textDocument/inlineCompletion` supports cancel-previous strategy for cancellation: If you send new completions
-request, the previous request is cancelled.
+request, the previous request is cancelled. `textDocument/copilotSuggest` requests that ask for completions share this
+strategy with `textDocument/inlineCompletion`, and a superseded one fails with the same `ServerCancelled` error.
+This also applies while the proxy waits for NES after its completion call has finished.
 
 Additionally the LSP `$/cancelRequest` method is supported to cancel any request. It is strongly encouraged to eagerly
 cancel completion requests as soon as possible.
