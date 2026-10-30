@@ -428,6 +428,12 @@ request. The server calls the providers the trigger reason allows, picks the win
 suggestion, so the client does not have to choose between the two. `textDocument/inlineCompletion` and
 `textDocument/copilotInlineEdit` are unchanged and remain available.
 
+CLS can instead select an isolated unified model using the default-off
+`copilotunifiedmodelenabled` and complete-profile `copilotunifiedmodelconfig`
+ExP variables. The wire contract and feedback kinds do not change.
+SDK invocation/context limits and zero-prediction cold-start compatibility
+routes are explicit; see [unified-model routing](../doc/copilot_suggest.md#unified-model-routing).
+
 The parameters combine those of the two methods and add the `reason` for the request:
 
 ```json
