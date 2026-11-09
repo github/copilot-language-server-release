@@ -374,10 +374,14 @@ The result is an object containing an `edits` array:
 The `command` field, per the LSP spec, is called via
 [`workspace/executeCommand`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand)
 *after* the user accepts the edit. Copilot uses this for acceptance telemetry.
+Each edit may also carry optional `requestedLanguageId` and `targetLanguageId`
+with the CLS-detected languages of the document that originated the request and
+the `textDocument` receiving the edit.
 
 The LSP spec does not provide an event for showing the edit, so a custom
 `textDocument/didShowInlineEdit` is used. Call it with an `item` parameter
-containing the item shown from the `edits` array (note only the first argument is required):
+containing the item shown from the `edits` array (note only the first argument is required),
+and an optional `viewKind` describing the first presentation shown to the user:
 
 ```json
 {
@@ -385,7 +389,8 @@ containing the item shown from the `edits` array (note only the first argument i
         "command": {
             "arguments": ["some-id"]
         }
-    }
+    },
+    "viewKind": "inlineDiff"
 }
 ```
 
@@ -506,6 +511,8 @@ the first next edit wins. The result is an object with an optional `suggestion`,
 - `items` holds more than one entry only for a completion, where the extras are alternatives to cycle through. Each
   item carries its own `command`.
 - A `jump` may carry `targetLine`: the line in the target document to preview, as a word-level diff.
+- An `edit` or `jump` may carry `requestedLanguageId` and `targetLanguageId`: the CLS-detected languages of the
+  document that originated the request and the `target` document receiving the edit.
 - `provenance.model` and `provenance.fromCache` describe the first item, and are absent when its provider does not
   report them. `fromCache` means the item was served without a model call.
 
