@@ -48,10 +48,11 @@ If using the `language-server.js` distribution, it is necessary to retain the en
 Communication with the language server typically happens over stdio with `--stdio`. The `language-server.js`
 distribution additionally supports Node IPC with `--node-ipc`.
 
-## Agent Client Protocol (ACP) (Preview)
+## Agent Client Protocol (ACP)
 
 The Copilot Language Server also supports the [Agent Client Protocol (ACP)](https://agentclientprotocol.com/),
-enabling integration with ACP-compatible editors like [JetBrains AI Assistant](https://www.jetbrains.com/help/ai-assistant/acp.html), [Zed](https://zed.dev/), and more.
+enabling integration with ACP-compatible clients like [JetBrains Air](https://www.jetbrains.com/air/),
+[JetBrains AI Assistant](https://www.jetbrains.com/help/ai-assistant/acp.html), [Zed](https://zed.dev/), and more.
 
 ### Running in ACP Mode
 
@@ -69,9 +70,14 @@ node ./node_modules/@github/copilot-language-server/dist/language-server.js --ac
 
 Communication happens over stdin/stdout.
 
-### JetBrains AI Assistant
+### JetBrains Air and JetBrains AI Assistant
 
-To use Copilot as an ACP agent in JetBrains AI Assistant, add the following to your `~/.jetbrains/acp.json`:
+GitHub Copilot is available as a built-in agent in [JetBrains Air](https://www.jetbrains.com/air/) and
+[JetBrains AI Assistant](https://www.jetbrains.com/help/ai-assistant/copilot-agent.html), so no manual ACP configuration
+is required for normal usage.
+
+To manually register the Copilot Language Server as a custom ACP agent, add the following reference configuration to
+`~/.jetbrains/acp.json`:
 
 ```json
 {
@@ -81,11 +87,18 @@ To use Copilot as an ACP agent in JetBrains AI Assistant, add the following to y
       "args": [
         "@github/copilot-language-server@latest",
         "--acp"
-      ]
+      ],
+      "env": {
+        "VARIABLE_NAME": "value"
+      }
     }
   }
 }
 ```
+
+The optional `env` object can be used to pass environment variables to the agent process. Remove it when no additional
+environment variables are needed. For more information about the built-in Air integration, see
+[GitHub Copilot in JetBrains Air](https://devblogs.microsoft.com/java/github-copilot-jetbrains-air/).
 
 See the [ACP specification](https://agentclientprotocol.com/) for full protocol details.
 
@@ -374,10 +387,14 @@ The result is an object containing an `edits` array:
 The `command` field, per the LSP spec, is called via
 [`workspace/executeCommand`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#workspace_executeCommand)
 *after* the user accepts the edit. Copilot uses this for acceptance telemetry.
+Each edit may also carry optional `requestedLanguageId` and `targetLanguageId`
+with the CLS-detected languages of the document that originated the request and
+the `textDocument` receiving the edit.
 
 The LSP spec does not provide an event for showing the edit, so a custom
 `textDocument/didShowInlineEdit` is used. Call it with an `item` parameter
-containing the item shown from the `edits` array (note only the first argument is required):
+containing the item shown from the `edits` array (note only the first argument is required),
+and an optional `viewKind` describing the first presentation shown to the user:
 
 ```json
 {
@@ -385,7 +402,8 @@ containing the item shown from the `edits` array (note only the first argument i
         "command": {
             "arguments": ["some-id"]
         }
-    }
+    },
+    "viewKind": "inlineDiff"
 }
 ```
 
@@ -506,6 +524,8 @@ the first next edit wins. The result is an object with an optional `suggestion`,
 - `items` holds more than one entry only for a completion, where the extras are alternatives to cycle through. Each
   item carries its own `command`.
 - A `jump` may carry `targetLine`: the line in the target document to preview, as a word-level diff.
+- An `edit` or `jump` may carry `requestedLanguageId` and `targetLanguageId`: the CLS-detected languages of the
+  document that originated the request and the `target` document receiving the edit.
 - `provenance.model` and `provenance.fromCache` describe the first item, and are absent when its provider does not
   report them. `fromCache` means the item was served without a model call.
 
