@@ -523,8 +523,8 @@ the first next edit wins. The result is an object with an optional `suggestion`,
   two can differ in future versions.
 - `items` holds the single winning item and its acceptance `command`.
 - A `jump` may carry `targetLine`: the line in the target document to preview, as a word-level diff.
-- An `edit` or `jump` may carry `requestedLanguageId` and `targetLanguageId`: the CLS-detected languages of the
-  document that originated the request and the `target` document receiving the edit.
+- A suggestion may carry `requestedLanguageId` and `targetLanguageId`: the CLS-detected languages of the
+  document that originated the request and the `target` document receiving the suggestion.
 - `provenance.model` and `provenance.fromCache` describe the first item, and are absent when its provider does not
   report them. `fromCache` means the item was served without a model call.
 
@@ -534,8 +534,10 @@ Report outcomes the way the method behind the `kind` does, passing the item that
 `completion`, send `textDocument/didShowCompletion` and `textDocument/didPartiallyAcceptCompletion` as described in
 [Inline Completions](#inline-completions). For an `edit` or a `jump`, send `textDocument/didShowInlineEdit` as described
 in [Next Edit Suggestions](#next-edit-suggestions). In every case, call the item's `command` via
-`workspace/executeCommand` after the user accepts it. Next edits returned this way carry no `cacheTelemetryContext`:
-the server caches them itself.
+`workspace/executeCommand` after the user accepts it (`github.copilot.didAcceptNextEditSuggestionItem` also accepts an
+optional positive cumulative `acceptedLength` second argument — counting characters of the inserted additive slice, excluding
+unchanged surrounding context — when a `ghostText`-presented `edit` is partially accepted). Next edits
+returned this way carry no `cacheTelemetryContext`: the server caches them itself.
 
 ## Panel Completions
 
